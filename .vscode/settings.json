@@ -1,0 +1,10 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "eslint.validate": ["typescript"],
+  "files.exclude": {
+    "dist": true,
+    "node_modules": true,
+    "coverage": true
+  }
+}
