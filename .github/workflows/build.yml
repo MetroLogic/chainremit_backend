@@ -65,7 +65,7 @@ jobs:
         run: npm ci
       - name: Run unit tests
         run: npm run test
-      # Database-dependent tests - commented out
+      # Uncomment if you want to run e2e tests
       # - name: Run e2e tests
       #   run: npm run test:e2e
       #   env:
@@ -96,7 +96,7 @@ jobs:
           name: dist
           path: dist
 
-  # Deployment jobs remain commented out as they were
+  # Uncomment and configure these jobs at deployment
   # deploy-staging:
   #   name: Deploy to Staging
   #   needs: build
