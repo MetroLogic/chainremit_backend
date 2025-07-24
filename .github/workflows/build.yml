@@ -1,99 +1,158 @@
-name: chainremit
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main, develop ]
   pull_request:
-    branches: [main, develop]
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: password
+  POSTGRES_DB: chainremit_db
+  DATABASE_URL: postgresql://postgres:password@localhost:5432/chainremit_db
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x, 20.x]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      - run: npm ci
-      - run: npm run build
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: build
-          path: dist
-
-  lint:
+  quality:
+    name: Code Quality
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run format
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Check formatting
+        run: npm run format -- --check
+      - name: Security audit
+        run: npm audit fix
 
   test:
+    name: Tests
+    needs: quality
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-      - uses: actions/checkout@v3
-      - run: npm ci
-      - run: npm run test:coverage
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v3
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: coverage
-          path: coverage
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run unit tests
+        run: npm run test
+      # Uncomment if you want to run e2e tests
+      # - name: Run e2e tests
+      #   run: npm run test:e2e
+      #   env:
+      #     DATABASE_URL: ${{ env.DATABASE_URL }}
+      # - name: Upload coverage reports
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }}
 
-  security:
+  build:
+    name: Build
+    needs: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - run: npm ci
-      - run: npm audit --audit-level=high
-
-  deploy-staging:
-    if: github.ref == 'refs/heads/main'
-    needs: [build, lint, test, security]
-    runs-on: ubuntu-latest
-    environment:
-      name: staging
-    steps:
-      - name: Deploy to Staging
-        run: echo "Deploying to Staging..."
-        # Add deployment script/command 
-      - name: Notify Slack
-        if: always()
-        uses: 8398a7/action-slack@v3
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-        # env:
-        #   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-
-  deploy-production:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
-    needs: [deploy-staging]
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-    steps:
-      - name: Deploy to Production
-        run: echo "Deploying to Production..."
-        # Add deployment script/command
-      - name: Notify Slack
-        if: always()
-        uses: 8398a7/action-slack@v3
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          status: ${{ job.status }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow,job,took
-        # env:
-        #   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          name: dist
+          path: dist
 
-  dependabot:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Enable Dependabot
-        run: echo "Dependabot enabled for automated dependency updates."
+  # Uncomment and configure these jobs at deployment
+  # deploy-staging:
+  #   name: Deploy to Staging
+  #   needs: build
+  #   if: github.ref == 'refs/heads/develop'
+  #   runs-on: ubuntu-latest
+  #   environment:
+  #     name: staging
+  #     url: https://staging-api.chainremit.com
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Download build artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: dist
+  #         path: dist
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ secrets.AWS_REGION }}
+  #     - name: Deploy to AWS Elastic Beanstalk
+  #       run: |
+  #         aws elasticbeanstalk create-application-version \
+  #           --application-name chainremit-backend \
+  #           --version-label "staging-${{ github.sha }}" \
+  #           --source-bundle S3Bucket="${{ secrets.EB_BUCKET }}",S3Key="staging-${{ github.sha }}.zip"
+  #         aws elasticbeanstalk update-environment \
+  #           --environment-name chainremit-staging \
+  #           --version-label "staging-${{ github.sha }}"
+
+  # deploy-production:
+  #   name: Deploy to Production
+  #   needs: build
+  #   if: github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+  #   environment:
+  #     name: production
+  #     url: https://api.chainremit.com
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Download build artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: dist
+  #         path: dist
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ secrets.AWS_REGION }}
+  #     - name: Deploy to AWS Elastic Beanstalk
+  #       run: |
+  #         aws elasticbeanstalk create-application-version \
+  #           --application-name chainremit-backend \
+  #           --version-label "prod-${{ github.sha }}" \
+  #           --source-bundle S3Bucket="${{ secrets.EB_BUCKET }}",S3Key="prod-${{ github.sha }}.zip"
+  #         aws elasticbeanstalk update-environment \
+  #           --environment-name chainremit-production \
+  #           --version-label "prod-${{ github.sha }}"
