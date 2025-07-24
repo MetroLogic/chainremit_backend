@@ -6,16 +6,13 @@ const logger = createLogger({
     format.timestamp(),
     format.errors({ stack: true }),
     format.splat(),
-    format.json()
+    format.json(),
   ),
   transports: [
     new transports.Console({
-      format: format.combine(
-        format.colorize(),
-        format.simple()
-      )
-    })
-  ]
+      format: format.combine(format.colorize(), format.simple()),
+    }),
+  ],
 });
 
 export default logger;

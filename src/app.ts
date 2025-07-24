@@ -16,11 +16,13 @@ const app = express();
 // Middleware
 app.use(helmet());
 app.use(cors());
-app.use(morgan('combined', {
-  stream: {
-    write: (message: string) => logger.info(message.trim())
-  }
-}));
+app.use(
+  morgan('combined', {
+    stream: {
+      write: (message: string) => logger.info(message.trim()),
+    },
+  }),
+);
 app.use(compression());
 app.use(express.json());
 
@@ -33,7 +35,7 @@ app.get('/health', (_req, res) => {
 });
 
 // Error handling middleware
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response) => {
   logger.error('Unhandled error', { error: err });
   res.status(500).json({ error: 'Internal Server Error' });
 });
