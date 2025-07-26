@@ -7,6 +7,7 @@ import dotenv from 'dotenv';
 import logger from './utils/logger';
 import { setupSwagger } from './swagger';
 import authRouter from '../src/router/auth.router';
+import notificationRouter from '../src/router/notification.router';
 
 // Load environment variables
 const env = process.env.NODE_ENV || 'development';
@@ -31,6 +32,7 @@ app.use(express.json());
 setupSwagger(app);
 
 app.use('/auth', authRouter);
+app.use('/api/notifications', notificationRouter);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
