@@ -37,3 +37,10 @@ export interface WalletConnectRequest {
     signature: string;
     message: string;
 }
+
+export interface JwtConfig {
+    accessSecret: string;
+    refreshSecret: string;
+    accessExpiresIn: string | number; // 'jsonwebtoken' accepts string (e.g., '1h') or number (seconds)
+    refreshExpiresIn: string | number;
+}

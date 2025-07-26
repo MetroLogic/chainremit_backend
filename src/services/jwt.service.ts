@@ -6,19 +6,19 @@ import { db } from '../model/user.model';
 export class JWTService {
     static generateTokens(userId: string): { accessToken: string; refreshToken: string } {
         const accessToken = jwt.sign(
-            { userId, type: 'access' }, 
-            config.jwt.accessSecret as string, 
+            { userId, type: 'access' },
+            config.jwt.accessSecret as string,
             {
                 expiresIn: config.jwt.accessExpiresIn as any,
-            }
+            },
         );
 
         const refreshToken = jwt.sign(
-            { userId, type: 'refresh' }, 
-            config.jwt.refreshSecret as string, 
+            { userId, type: 'refresh' },
+            config.jwt.refreshSecret as string,
             {
                 expiresIn: config.jwt.refreshExpiresIn as any,
-            }
+            },
         );
 
         return { accessToken, refreshToken };

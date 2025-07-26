@@ -20,7 +20,7 @@ const router = Router();
 router.post('/register', authRateLimiter, register);
 
 // Login user
-router.post('/login',  authRateLimiter, login);
+router.post('/login', authRateLimiter, login);
 
 // Logout user
 router.post('/logout', protect, logout);
@@ -29,7 +29,7 @@ router.post('/logout', protect, logout);
 
 // Verify OTP
 router.post('/verify/otp', verifyOTP);
-router.post('/resend-otp',  authRateLimiter, resendOTP);
+router.post('/resend-otp', authRateLimiter, resendOTP);
 
 // Request password reset
 router.post('/forgot-password', passwordResetRateLimiter, forgotPassword);

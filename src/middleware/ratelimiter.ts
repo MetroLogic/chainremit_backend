@@ -22,7 +22,6 @@ export const createRateLimiter = (windowMs: number, max: number, message: string
 
             next();
         } catch (error) {
-            console.error('Rate limiting error:', error);
             next(); // Continue on error
         }
     };

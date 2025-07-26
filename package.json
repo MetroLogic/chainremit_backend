@@ -44,6 +44,7 @@
     "winston": "^3.17.0"
   },
   "devDependencies": {
+    "@eslint/js": "^9.32.0",
     "@types/bcrypt": "^6.0.0",
     "@types/compression": "^1.8.1",
     "@types/cors": "^2.8.19",
@@ -56,16 +57,19 @@
     "@types/swagger-ui-express": "^4.1.8",
     "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
-    "eslint": "^8.40.0",
+    "eslint": "^8.57.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.3",
+    "globals": "^16.3.0",
     "husky": "^8.0.3",
     "jest": "^29.5.0",
+    "jiti": "^2.5.1",
     "lint-staged": "^16.1.2",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.0",
-    "ts-node": "^10.9.1"
+    "ts-node": "^10.9.1",
+    "typescript-eslint": "^8.38.0"
   },
   "lint-staged": {
     "src/**/*.ts": [

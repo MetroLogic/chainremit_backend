@@ -20,19 +20,14 @@ const googleClient = new OAuth2Client(config.oauth.google.clientId);
  */
 export const resendOTP = asyncHandler(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-        console.log('=== RESEND OTP START ===');
-        console.log('Request body:', req.body);
-
         const { email } = req.body;
         if (!email) {
-            console.log('Missing email');
             return next(new ErrorResponse('Email is required', 400));
         }
 
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            console.log('Invalid email format:', email);
             return next(new ErrorResponse('Invalid email format', 400));
         }
 
@@ -40,40 +35,32 @@ export const resendOTP = asyncHandler(
             // Find user (normalize email to handle case sensitivity)
             const normalizedEmail = email.trim().toLowerCase();
             const user = await db.findUserByEmail(normalizedEmail);
-            console.log('User found:', user ? 'YES' : 'NO');
 
             if (!user) {
-                console.log('User not found for email:', normalizedEmail);
                 return next(new ErrorResponse('User not found. Please register first.', 404));
             }
 
             // Check if user is already verified
             if (user.isEmailVerified) {
-                console.log('Email already verified for user ID:', user.id);
                 return next(new ErrorResponse('Email already verified', 400));
             }
 
             // Delete existing OTP if any
             await db.deleteVerificationTokenByUserId(user.id);
-            console.log('Existing OTP deleted for user ID:', user.id);
 
             // Generate new OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
             await db.createVerificationToken(user.id, otp, expiresAt);
-            console.log('New OTP generated:', otp);
-            console.log('OTP expires at:', expiresAt);
 
             // Send OTP email (commented out for now)
             // await EmailService.sendOTPEmail(email, otp);
 
-            console.log('=== RESEND OTP END ===');
             res.json({
                 success: true,
                 message: 'New OTP sent successfully. Check your logs or database for the OTP.',
             });
         } catch (error) {
-            console.error('Error in resendOTP:', error);
             return next(new ErrorResponse('Internal server error', 500));
         }
     },
@@ -87,26 +74,19 @@ export const resendOTP = asyncHandler(
  */
 export const register = asyncHandler(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-        console.log('=== REGISTER START ===');
-        console.log('Request body:', req.body);
-
         const { error, value } = registerSchema.validate(req.body);
         if (error) {
-            console.log('Validation error:', error.details[0].message);
             return next(new ErrorResponse(error.details[0].message, 400));
         }
 
         const { email, password } = value;
-        console.log('Validated email:', email);
 
         // Check if user already exists
         const existingUser = await db.findUserByEmail(email);
         if (existingUser) {
-            console.log('User already exists');
             return next(new ErrorResponse('User already exists', 409));
         }
 
-        console.log('Creating new user...');
         // Hash password
         const saltRounds = 12;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -117,22 +97,16 @@ export const register = asyncHandler(
             password: hashedPassword,
             isEmailVerified: false,
         });
-        console.log('User created with ID:', user.id);
 
         // Generate OTP (6-digit number)
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        console.log('=== GENERATED OTP ===');
-        console.log('OTP:', otp);
-        console.log('=== END OTP ===');
 
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
         await db.createVerificationToken(user.id, otp, expiresAt);
-        console.log('Verification token created');
 
         // Send OTP email (commented out for now)
         // await EmailService.sendOTPEmail(email, otp);
 
-        console.log('=== REGISTER END ===');
         res.status(201).json({
             success: true,
             message: 'User registered successfully. Please check your email for OTP verification.',
@@ -147,83 +121,51 @@ export const register = asyncHandler(
  * @access Public
  * @type POST
  */
-// interface AuthRequest extends Request {
-//     body: {
-//         email: string;
-//         otp: string;
-//     };
-// }
-
 export const verifyOTP = asyncHandler(
     async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-        console.log('=== VERIFY OTP START ===');
-        console.log('Request body:', req.body);
-
         const { email, otp } = req.body;
 
         // Validate input
         if (!email || !otp) {
-            console.log('Missing email or OTP');
             return next(new ErrorResponse('Email and OTP are required', 400));
         }
 
         // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            console.log('Invalid email format:', email);
             return next(new ErrorResponse('Invalid email format', 400));
         }
 
         // Validate OTP format (6-digit numeric)
         if (!/^\d{6}$/.test(otp)) {
-            console.log('Invalid OTP format:', otp);
             return next(new ErrorResponse('OTP must be a 6-digit number', 400));
         }
-
-        console.log('Email:', email);
-        console.log('OTP received:', otp);
 
         try {
             // Find user (normalize email to handle case sensitivity)
             const normalizedEmail = email.trim().toLowerCase();
             const user = await db.findUserByEmail(normalizedEmail);
-            console.log('User found:', user ? 'YES' : 'NO');
 
             if (!user) {
-                console.log('User not found for email:', normalizedEmail);
                 return next(new ErrorResponse('User not found. Please register first.', 404));
             }
-            console.log('User ID:', user.id);
 
             // Find verification token
             const verificationData = await db.findVerificationTokenByUserId(user.id);
-            console.log('Verification data found:', verificationData ? 'YES' : 'NO');
 
             if (!verificationData) {
-                console.log('No verification token found for user ID:', user.id);
                 return next(new ErrorResponse('No OTP found. Request a new one.', 400));
             }
 
-            console.log('Stored OTP:', verificationData.token);
-            console.log('Received OTP:', otp);
-            console.log('OTP match:', verificationData.token === otp);
-            console.log('Expires at:', verificationData.expiresAt);
-            console.log('Current time:', new Date());
-            console.log('Is expired:', verificationData.expiresAt < new Date());
-
             // Check OTP match
             if (verificationData.token !== otp) {
-                console.log('Invalid OTP - verification failed');
                 return next(new ErrorResponse('Invalid OTP', 400));
             }
 
             // Check if OTP is expired
             if (verificationData.expiresAt < new Date()) {
-                console.log('OTP expired');
                 return next(new ErrorResponse('OTP has expired. Request a new one.', 400));
             }
-
-            console.log('OTP verification successful');
 
             // Update user verification status
             await db.updateUser(user.id, { isEmailVerified: true });
@@ -235,7 +177,6 @@ export const verifyOTP = asyncHandler(
             const tokens = JWTService.generateTokens(user.id);
             await JWTService.storeRefreshToken(user.id, tokens.refreshToken);
 
-            console.log('=== VERIFY OTP END ===');
             res.json({
                 success: true,
                 message: 'OTP verified successfully',
@@ -247,7 +188,6 @@ export const verifyOTP = asyncHandler(
                 tokens,
             });
         } catch (error) {
-            console.error('Error in verifyOTP:', error);
             return next(new ErrorResponse('Internal server error', 500));
         }
     },
