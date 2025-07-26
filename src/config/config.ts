@@ -10,7 +10,23 @@ export const config = {
     },
     email: {
         sendgridApiKey: process.env.SENDGRID_API_KEY,
-        fromEmail: process.env.FROM_EMAIL || 'noreply@yourapp.com',
+        fromEmail: process.env.FROM_EMAIL || 'noreply@chainremit.com',
+        fromName: process.env.FROM_NAME || 'ChainRemit',
+    },
+    sms: {
+        twilioAccountSid: process.env.TWILIO_ACCOUNT_SID,
+        twilioAuthToken: process.env.TWILIO_AUTH_TOKEN,
+        twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER,
+    },
+    push: {
+        firebaseServerKey: process.env.FIREBASE_SERVER_KEY,
+        firebaseDatabaseUrl: process.env.FIREBASE_DATABASE_URL,
+        firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
+    },
+    redis: {
+        host: process.env.REDIS_HOST || 'localhost',
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        password: process.env.REDIS_PASSWORD,
     },
     oauth: {
         google: {
@@ -23,6 +39,11 @@ export const config = {
             keyId: process.env.APPLE_KEY_ID,
             privateKey: process.env.APPLE_PRIVATE_KEY,
         },
+    },
+    notification: {
+        maxRetries: parseInt(process.env.NOTIFICATION_MAX_RETRIES || '3'),
+        retryDelay: parseInt(process.env.NOTIFICATION_RETRY_DELAY || '5000'),
+        batchSize: parseInt(process.env.NOTIFICATION_BATCH_SIZE || '100'),
     },
     app: {
         baseUrl: process.env.BASE_URL || 'http://localhost:3000',
