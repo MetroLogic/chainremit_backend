@@ -184,7 +184,7 @@ class Database {
     startCleanupTimer(): void {
         // Don't start timers in test environment
         if (process.env.NODE_ENV === 'test') return;
-        
+
         setInterval(
             () => {
                 const now = new Date();
