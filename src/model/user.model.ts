@@ -182,6 +182,9 @@ class Database {
 
     // Cleanup expired tokens periodically
     startCleanupTimer(): void {
+        // Don't start timers in test environment
+        if (process.env.NODE_ENV === 'test') return;
+        
         setInterval(
             () => {
                 const now = new Date();
