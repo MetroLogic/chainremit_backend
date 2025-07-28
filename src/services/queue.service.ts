@@ -543,9 +543,12 @@ export class QueueService {
     }
 }
 
-// Initialize and start processing when the module is loaded
-QueueService.initialize();
-QueueService.startProcessing();
+// Only initialize in non-test environments
+if (process.env.NODE_ENV !== 'test') {
+    // Initialize and start processing when the module is loaded
+    QueueService.initialize();
+    QueueService.startProcessing();
+}
 
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
