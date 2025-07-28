@@ -398,18 +398,23 @@ class NotificationDatabase {
 
     // Cleanup expired data
     startCleanupTimer(): void {
+        // Don't start timers in test environment
+        if (process.env.NODE_ENV === 'test') return;
+        
         setInterval(
             () => {
                 const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-
-                // Clean old history (keep last 30 days)
-                this.history = this.history.filter((h) => h.createdAt > thirtyDaysAgo);
-
-                // Clean old jobs
-                this.jobs = this.jobs.filter((j) => j.createdAt > thirtyDaysAgo);
+                
+                // Clean up old notifications
+                this.notifications = this.notifications.filter(
+                    (n: NotificationData) => n.createdAt > thirtyDaysAgo,
+                );
+                
+                // Clean up old analytics
+                this.analytics = this.analytics.filter((a: any) => a.timestamp > thirtyDaysAgo);
             },
-            24 * 60 * 60 * 1000,
-        ); // Run daily
+            24 * 60 * 60 * 1000, // Run daily
+        );
     }
 }
 
