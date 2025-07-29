@@ -1,3 +1,43 @@
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - email
+ *         - password
+ *       properties:
+ *         id:
+ *           type: string
+ *           description: The auto-generated id of the user
+ *         email:
+ *           type: string
+ *           description: The email of the user
+ *         password:
+ *           type: string
+ *           description: The password of the user
+ *         isEmailVerified:
+ *           type: boolean
+ *           description: Whether the user's email is verified
+ *         socialId:
+ *           type: string
+ *           description: The social id of the user
+ *         socialProvider:
+ *           type: string
+ *           description: The social provider of the user
+ *         walletAddress:
+ *           type: string
+ *           description: The wallet address of the user
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: The date the user was created
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *           description: The date the user was last updated
+ */
 import { User } from '../types/user.types';
 import crypto from 'crypto';
 
