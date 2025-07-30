@@ -405,13 +405,15 @@ class NotificationDatabase {
             () => {
                 const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-                // Clean up old notifications
-                this.notifications = this.notifications.filter(
-                    (n: NotificationData) => n.createdAt > thirtyDaysAgo,
+                // Clean up old notification history
+                this.history = this.history.filter(
+                    (n: NotificationHistory) => n.createdAt > thirtyDaysAgo,
                 );
 
-                // Clean up old analytics
-                this.analytics = this.analytics.filter((a: any) => a.timestamp > thirtyDaysAgo);
+                // Clean up old jobs (older than 30 days)
+                this.jobs = this.jobs.filter(
+                    (job: NotificationJob) => job.createdAt > thirtyDaysAgo,
+                );
             },
             24 * 60 * 60 * 1000, // Run daily
         );
