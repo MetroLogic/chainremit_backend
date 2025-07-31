@@ -6,7 +6,7 @@ let wss: Server;
 export function setupRatesWebSocket(server: any) {
     wss = new WebSocket.Server({ server, path: '/ws/rates' });
 
-    wss.on('connection', async (ws) => {
+    wss.on('connection', async (ws: WebSocket) => {
         // Send current rates on connect
         const rates = await RatesService.getCachedRates();
         ws.send(JSON.stringify({ type: 'current', rates }));
