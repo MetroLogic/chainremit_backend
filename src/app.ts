@@ -7,7 +7,10 @@ import dotenv from 'dotenv';
 import logger from './utils/logger';
 import { setupSwagger } from './swagger';
 import authRouter from '../src/router/auth.router';
-import notificationRouter from '../src/router/notification.router';
+
+import ratesRouter from '../src/router/rates.router';
+
+import { scheduleRatesJob } from '../src/jobs/rates.job';
 
 // Load environment variables
 const env = process.env.NODE_ENV || 'development';
@@ -32,7 +35,7 @@ app.use(express.json());
 setupSwagger(app);
 
 app.use('/auth', authRouter);
-app.use('/api/notifications', notificationRouter);
+app.use('/api/rates', ratesRouter);
 
 // Health check endpoint
 app.get('/health', (_req, res) => {
@@ -47,8 +50,13 @@ app.use((err: Error, _req: express.Request, res: express.Response) => {
 
 const PORT = process.env.PORT || 3000;
 if (process.env.NODE_ENV !== 'test') {
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         logger.info(`Server running on port ${PORT}`);
+        scheduleRatesJob();
+    });
+    // WebSocket setup
+    import('../src/ws/rates.ws').then(({ setupRatesWebSocket }) => {
+        setupRatesWebSocket(server);
     });
 }
 
